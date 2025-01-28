@@ -3,10 +3,16 @@
 
 import { contextBridge, ipcRenderer } from 'electron/renderer'
 
+type ElectronAPI = {
+  modifyTitle: (newTitle: string) => void;
+  ping: (data: string) => Promise<string>;
+  writeRxDB: () => void;
+  readRxDB: () => Promise<any>;
+}
 
 declare global {
   interface Window {
-    electronAPI: any;
+    electronAPI: ElectronAPI
   }
 }
 
@@ -18,5 +24,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     console.log(`[*] renderer -> preload, preload receive data from renderer: ${data}`);
     const result = await ipcRenderer.invoke('ping', data);
     return result;
+  },
+  writeRxDB: () => {
+    ipcRenderer.send('writeRxDB');
+  },
+  readRxDB: async () => {
+    return await ipcRenderer.invoke('readRxDB');
   }
-})
+} as ElectronAPI)
+

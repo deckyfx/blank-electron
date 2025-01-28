@@ -30,8 +30,8 @@ import './index.css';
 
 console.log('👋 This message is being logged by "renderer.js", included via webpack');
 
-const btnModifyTitle = document.getElementById('btn-modify-title')
-const btnPing = document.getElementById('btn-ping')
+const btnModifyTitle = document.getElementById('btn-modify-title');
+const btnPing = document.getElementById('btn-ping');
 
 btnModifyTitle?.addEventListener('click', () => {
   console.log("[*] button modify title clicked.");
@@ -44,5 +44,17 @@ btnPing?.addEventListener('click', async () => {
   // console.log(window);
   // console.log(window.electronAPI);
   const result = await window.electronAPI?.ping("ping");
+  console.log(`[*] ipcMain -> renderer, renderer receive result from ipcMain : ${result}`);
+});
+
+
+const btnWrite = document.getElementById('btn-write');
+const btnRead = document.getElementById('btn-read');
+btnWrite?.addEventListener('click', () => {
+  window.electronAPI?.writeRxDB();
+});
+
+btnRead?.addEventListener('click', async () => {
+  const result = await window.electronAPI?.readRxDB();
   console.log(`[*] ipcMain -> renderer, renderer receive result from ipcMain : ${result}`);
 });
