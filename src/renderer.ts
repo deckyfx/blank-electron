@@ -29,3 +29,20 @@
 import './index.css';
 
 console.log('👋 This message is being logged by "renderer.js", included via webpack');
+
+const btnModifyTitle = document.getElementById('btn-modify-title')
+const btnPing = document.getElementById('btn-ping')
+
+btnModifyTitle?.addEventListener('click', () => {
+  console.log("[*] button modify title clicked.");
+  const newTitle = "Hello Electron with Typescript!";
+  window.electronAPI?.modifyTitle(newTitle);
+});
+
+btnPing?.addEventListener('click', async () => {
+  console.log("[*] button ping clicked.");
+  // console.log(window);
+  // console.log(window.electronAPI);
+  const result = await window.electronAPI?.ping("ping");
+  console.log(`[*] ipcMain -> renderer, renderer receive result from ipcMain : ${result}`);
+});
