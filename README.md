@@ -31,3 +31,6 @@ Now you can build the app for windows, with the following command: (Don't forget
 npx electron-forge package --platform=win32 && npx electron-forge make --platform=win32
 ```
 
+Because this project depends on native module sqlite3 that built for linux, the generated exe will not work on windows, to hack this: obtain the `node_sqlite3.node` for windows file from the node-sqlite3 github release page and replace the one in the `node_modules/sqlite3/build/Release` directory. then rebuild the app.
+
+In Windows, the application will be installed in `C:\Users\<username>\AppData\Local\<this_app_name>\`
