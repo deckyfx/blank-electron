@@ -23,6 +23,8 @@ const {
 
 import sqlite3 from "sqlite3";
 
+import { Todo } from "./models";
+
 const {
   wrappedKeyEncryptionCryptoJsStorage,
 } = require("rxdb/plugins/encryption-crypto-js");
@@ -215,11 +217,38 @@ export async function read() {
         },
       },
     });
-    const results = await query?.exec();
+    const results = await query?.exec() as Todo[];
     console.log("foundDocuments", JSON.stringify(results));
     return results;
   } catch (e: any) {
     console.log("read error", e);
+    return [];
+  }
+}
+
+export async function addTodo(todo: string): Promise<Error | undefined> {
+  try {
+    if (!collections?.todos) {
+      throw new Error("todos collection not found");
+    }
+    const myDocument = await collections?.todos.insert({
+      id: String(new Date().getTime()),
+      name: todo,
+      done: false,
+      timestamp: new Date().toISOString(),
+      nested: {
+        foo: "bar",
+        bar: "foo",
+        nested: {
+          foo: "bar",
+          bar: "foo",
+        },
+      },
+    });
+    return;
+  } catch (e: any) {
+    console.log("write error", e);
+    return e as Error;
   }
 }
 

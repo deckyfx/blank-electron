@@ -16,7 +16,15 @@ const config: ForgeConfig = {
     asar: true,
   },
   rebuildConfig: {},
-  makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin']), new MakerRpm({}), new MakerDeb({})],
+  makers: [
+    //new MakerZIP({}, ['darwin']),
+    //new MakerRpm({}), 
+    new MakerDeb({}),
+    new MakerSquirrel({
+      authors: 'Decky Fx',
+      description: 'Electron with RxDB Premium',
+    }), 
+  ],
   plugins: [
     new AutoUnpackNativesPlugin({}),
     new WebpackPlugin({

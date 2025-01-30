@@ -2,7 +2,7 @@
 
 import { BrowserWindow, ipcMain } from "electron";
 
-import initRxDB, {write, read} from "./rxdb";
+import initRxDB, {write, read, addTodo} from "./rxdb";
 
 initRxDB();
 
@@ -26,6 +26,20 @@ export function ipcMainProcess(win: BrowserWindow) {
   });
 
   ipcMain.handle("readRxDB", async (event) => {
+    const result = await read();
+    return JSON.stringify(result);
+  });
+
+
+  ipcMain.on("addTodo", async (_, todo: string) => {
+    const result = await addTodo(todo);
+    if (result) {
+      console.error(result);
+    }
+    return;
+  });
+
+  ipcMain.handle("loadTodos", async (event) => {
     const result = await read();
     return JSON.stringify(result);
   });

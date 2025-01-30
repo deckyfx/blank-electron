@@ -3,11 +3,18 @@
 
 import { contextBridge, ipcRenderer } from 'electron/renderer'
 
+import { Todo } from './models';
+
 type ElectronAPI = {
   modifyTitle: (newTitle: string) => void;
   ping: (data: string) => Promise<string>;
   writeRxDB: () => void;
   readRxDB: () => Promise<any>;
+
+  rxdb: {
+    addTodo: (todo: string) => Promise<void>;
+    loadTodos: () => Promise<string>;
+  }
 }
 
 declare global {
@@ -30,6 +37,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   readRxDB: async () => {
     return await ipcRenderer.invoke('readRxDB');
+  },
+
+  rxdb: {
+    addTodo: async (todo: string) => {
+      ipcRenderer.send('addTodo', todo);
+      return;
+    },
+    loadTodos: async () => {
+      const result: string = await ipcRenderer.invoke('loadTodos');
+      return result;
+    }
   }
 } as ElectronAPI)
 
