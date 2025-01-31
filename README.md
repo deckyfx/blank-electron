@@ -38,3 +38,15 @@ npx electron-forge package --platform=win32 && npx electron-forge make --platfor
 Because this project depends on native module sqlite3 that built for linux, the generated exe will not work on windows, to hack this: obtain the `node_sqlite3.node` for windows file from the node-sqlite3 github release page and replace the one in the `node_modules/sqlite3/build/Release` directory. then rebuild the app.
 
 In Windows, the application will be installed in `C:\Users\<username>\AppData\Local\<this_app_name>\`
+
+## AWSAmplify Subscribe not working issues
+
+Under the hood `aws-amplify` subscribe is using `WebSocket` which is not available in the main process (NodeJS layer),
+To solve this, we need to install third party `ws` package and tell node when it call `WebSocket` it point to the custom package.
+
+Put this in index.ts file:
+
+```
+const { WebSocket } = require("ws");
+global.WebSocket = WebSocket;
+```
