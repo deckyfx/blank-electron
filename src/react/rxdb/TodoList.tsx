@@ -6,15 +6,6 @@ export default function TodoList() {
   const [todos, setTodos] = useState<RxTodo[]>([]);
   const [listening, setListening] = useState<boolean>(false);
 
-  async function loadTodos() {
-    if (!window.electronAPI) {
-      console.error("window.electronAPI is not defined");
-      return;
-    }
-    const result = await window.electronAPI.rxdb.loadTodos();
-    setTodos(JSON.parse(result) as RxTodo[]);
-  }
-
   async function listenTodo() {
     if (!window.electronAPI) {
       console.error("window.electronAPI is not defined");
@@ -70,17 +61,26 @@ export default function TodoList() {
     });
   }
 
-  useEffect(() => {
-    listenTodo();
-  }, []);
+  useEffect(() => {}, []);
 
   return (
-    <div>
+    <div
+      style={{
+        marginBottom: "10px",
+        padding: "10px",
+        border: "1px solid #ccc",
+        borderRadius: "5px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "10px",
+      }}
+    >
+      <h2 style={{ margin: 0, padding: 0 }}>Todo List</h2>
       {/* <button onClick={loadTodos}>Load Todos</button> */}
       {listening ? (
         <button onClick={stopListenTodo}>Stop Listen Todo</button>
       ) : (
-        <button onClick={listenTodo}>Listen Todo</button>
+        <button onClick={listenTodo}>LISTEN Todo</button>
       )}
       <ul>{mappedTodos()}</ul>
     </div>

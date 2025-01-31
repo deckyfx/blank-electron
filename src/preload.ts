@@ -23,6 +23,9 @@ type ElectronAPI = {
 
     toggleDone: (todo: RxTodo) => Promise<void>;
     deleteTodo: (todo: RxTodo) => Promise<void>;
+
+    setupRxDB: (path: string) => Promise<void>;
+    onRxDBReadyChanged: (channel: string, callback: (data?: string) => void) => void;
   };
 };
 
@@ -95,6 +98,16 @@ contextBridge.exposeInMainWorld("electronAPI", {
     deleteTodo: async (todo: RxTodo) => {
       ipcRenderer.send("deleteTodo", todo);
       return;
+    },
+
+    setupRxDB: async (path: string) => {
+      ipcRenderer.send("setupRxDB", path);
+      return;
+    },
+    onRxDBReadyChanged: (channel: string, callback: (data: string) => void) => {
+      ipcRenderer.on(channel, (event, data) => {
+        callback(data);
+      });
     },
   },
 } as ElectronAPI);

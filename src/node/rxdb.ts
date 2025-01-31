@@ -63,7 +63,7 @@ let collections: {
   todos: any;
 } | null = null;
 
-async function initRxDB() {
+async function initRxDB(readyEvent: Electron.IpcMainInvokeEvent, path: string) {
   try {
     if (RXDB) {
       console.log("Do not re init rxdb");
@@ -72,7 +72,7 @@ async function initRxDB() {
     console.log("init rxdb");
 
     RXDB = await createRxDatabase({
-      name: DB_PATH,
+      name: path,
       multiInstance: false, // <- Set multiInstance to false when using RxDB in React Native
       storage: ENCRYPTED_STORAGE,
       ignoreDuplicate: true,
@@ -82,10 +82,10 @@ async function initRxDB() {
   } catch (e: any) {
     console.log("initRxDB error", e);
   }
-  await initCollections();
+  await initCollections(readyEvent);
 }
 
-async function initCollections() {
+async function initCollections(readyEvent: Electron.IpcMainInvokeEvent) {
   try {
     if (!RXDB) {
       console.log("RXDB Not Initialized");
@@ -138,6 +138,8 @@ async function initCollections() {
       collections.todos,
       "todos-replicator"
     );
+
+    readyEvent.sender.send("rxdb-ready", "ready");
   } catch (e: any) {
     console.log("initCollections error", e);
   }

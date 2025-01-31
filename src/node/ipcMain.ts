@@ -16,8 +16,6 @@ import { writeSQLite, readSQLite } from "./sqlite";
 
 import { RxTodo } from "../types/models";
 
-initRxDB();
-
 export function ipcMainProcess(win: BrowserWindow) {
   ipcMain.on("setTitle", (event, title) => {
     console.log(`[*] new title: ${title}`);
@@ -83,6 +81,11 @@ export function ipcMainProcess(win: BrowserWindow) {
 
   ipcMain.on("deleteTodo", async (_, todo: RxTodo) => {
     await deleteTodo(todo);
+    return;
+  });
+
+  ipcMain.on("setupRxDB", async (event, path: string) => {
+    initRxDB(event, path);
     return;
   });
 }
