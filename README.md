@@ -1,3 +1,7 @@
+# RxDB Premium Electron App
+
+RxDB premium must be installed with correct keys,
+
 Building electron App for Windows on Ubuntu requires wine and mono to be installed.
 
 

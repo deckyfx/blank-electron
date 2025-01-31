@@ -2,7 +2,19 @@
 
 import { BrowserWindow, ipcMain } from "electron";
 
-import initRxDB, {write, read, addTodo} from "./rxdb";
+import initRxDB, {
+  write,
+  read,
+  addTodo,
+  listenTodo,
+  stopListenTodo,
+  toggleDone,
+  deleteTodo,
+} from "./rxdb";
+
+import { writeSQLite, readSQLite } from "./sqlite";
+
+import { RxTodo } from "../types/models";
 
 initRxDB();
 
@@ -30,7 +42,6 @@ export function ipcMainProcess(win: BrowserWindow) {
     return JSON.stringify(result);
   });
 
-
   ipcMain.on("addTodo", async (_, todo: string) => {
     const result = await addTodo(todo);
     if (result) {
@@ -42,5 +53,36 @@ export function ipcMainProcess(win: BrowserWindow) {
   ipcMain.handle("loadTodos", async (event) => {
     const result = await read();
     return JSON.stringify(result);
+  });
+
+  ipcMain.on("addDemo", async (_, todo: string) => {
+    await writeSQLite(todo);
+    return;
+  });
+
+  ipcMain.handle("loadDemos", async (event) => {
+    const result = await readSQLite();
+    console.log(result);
+    return JSON.stringify(result);
+  });
+
+  ipcMain.on("listenTodo", async (event) => {
+    await listenTodo(event);
+    return;
+  });
+
+  ipcMain.on("stopListenTodo", async (_) => {
+    await stopListenTodo();
+    return;
+  });
+
+  ipcMain.on("toggleDone", async (_, todo: RxTodo) => {
+    await toggleDone(todo);
+    return;
+  });
+
+  ipcMain.on("deleteTodo", async (_, todo: RxTodo) => {
+    await deleteTodo(todo);
+    return;
   });
 }

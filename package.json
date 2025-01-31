@@ -19,6 +19,8 @@
   },
   "license": "MIT",
   "dependencies": {
+    "aws-amplify": "^6.12.2",
+    "axios": "^1.7.9",
     "electron-squirrel-startup": "^1.0.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

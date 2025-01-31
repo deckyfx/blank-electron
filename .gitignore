@@ -93,3 +93,4 @@ out/
 
 .yarn/*
 grandedb
+database.sqlite3

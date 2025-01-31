@@ -15,25 +15,26 @@ must hack:
 
 // * RxDB and RxDB Premium must be imported as require, not import
 
+import { BaseWindow, BrowserView } from "electron";
+
+import sqlite3 from "sqlite3";
+
 const { createRxDatabase, addRxPlugin } = require("rxdb");
+
 const {
   getRxStorageSQLite,
   getSQLiteBasicsNode,
 } = require("rxdb-premium/plugins/storage-sqlite");
 
-import sqlite3 from "sqlite3";
-
-import { Todo } from "./models";
+import { RxTodo, RxTodoSchema } from "../types/models";
+import { DB_PATH } from "../types/constants";
+import { createReplicator } from "./replicator";
 
 const {
   wrappedKeyEncryptionCryptoJsStorage,
 } = require("rxdb/plugins/encryption-crypto-js");
-const {
-  wrappedValidateAjvStorage,
-} = require("rxdb/plugins/validate-ajv");
-const {
-  RxDBMigrationSchemaPlugin,
-} = require("rxdb/plugins/migration-schema");
+const { wrappedValidateAjvStorage } = require("rxdb/plugins/validate-ajv");
+const { RxDBMigrationSchemaPlugin } = require("rxdb/plugins/migration-schema");
 const { RxDBDevModePlugin } = require("rxdb/plugins/dev-mode");
 
 addRxPlugin(RxDBDevModePlugin);
@@ -58,50 +59,6 @@ const ENCRYPTED_STORAGE = wrappedKeyEncryptionCryptoJsStorage({
   storage: VALIDATED_STORAGE,
 });
 
-const todoSchema = {
-  version: 1,
-  primaryKey: "id",
-  type: "object",
-  properties: {
-    id: {
-      type: "string",
-      maxLength: 100, // <- the primary key must have maxLength
-    },
-    name: {
-      type: "string",
-    },
-    done: {
-      type: "boolean",
-    },
-    nested: {
-      type: "object",
-      properties: {
-        foo: {
-          type: "string",
-        },
-        bar: {
-          type: "string",
-        },
-        nested: {
-          type: "object",
-          properties: {
-            foo: {
-              type: "string",
-            },
-            bar: {
-              type: "string",
-            },
-          },
-        },
-      },
-    },
-    timestamp: {
-      type: "string",
-    },
-  },
-  required: ["id", "name", "done", "timestamp"],
-};
-
 let collections: {
   todos: any;
 } | null = null;
@@ -115,10 +72,11 @@ async function initRxDB() {
     console.log("init rxdb");
 
     RXDB = await createRxDatabase({
-      name: "grandedb",
+      name: DB_PATH,
       multiInstance: false, // <- Set multiInstance to false when using RxDB in React Native
       storage: ENCRYPTED_STORAGE,
       ignoreDuplicate: true,
+      password: "12345678",
     });
     console.log("rxdb created");
   } catch (e: any) {
@@ -142,7 +100,7 @@ async function initCollections() {
     collections =
       (await RXDB?.addCollections({
         todos: {
-          schema: todoSchema,
+          schema: RxTodoSchema,
           autoMigrate: false, // <- migration will not run at creation
           migrationStrategies: {
             1: function (oldDoc: any) {
@@ -161,19 +119,25 @@ async function initCollections() {
     }
 
     const needed = await collections.todos.migrationNeeded();
-    console.log("No migration needed");
-    if (!needed) return;
 
-    // start the migration
-    collections.todos.startMigration(10); // 10 is the batch-size, how many docs will run at parallel
-    const migrationState = collections.todos.getMigrationState();
-    // 'start' the observable
-    migrationState.$.subscribe(
-      (state: any) => console.dir(state),
-      (error: any) => console.error(error),
-      () => console.log("done")
+    if (needed) {
+      console.log("migrating collection");
+      // start the migration
+      collections.todos.startMigration(10); // 10 is the batch-size, how many docs will run at parallel
+      const migrationState = collections.todos.getMigrationState();
+      // 'start' the observable
+      migrationState.$.subscribe(
+        (state: any) => console.dir(state),
+        (error: any) => console.error(error),
+        () => console.log("done")
+      );
+    }
+
+    console.log("creating replication state");
+    const replicationState = await createReplicator<RxTodo>(
+      collections.todos,
+      "todos-replicator"
     );
-    console.log("collections migrated");
   } catch (e: any) {
     console.log("initCollections error", e);
   }
@@ -184,22 +148,15 @@ export async function write() {
     if (!collections?.todos) {
       throw new Error("todos collection not found");
     }
-    const myDocument = await collections?.todos.insert({
+
+    const data: RxTodo = {
       id: String(new Date().getTime()),
       name: "Learn RxDB",
       done: false,
-      timestamp: new Date().toISOString(),
-      nested: {
-        foo: "bar",
-        bar: "foo",
-        nested: {
-          foo: "bar",
-          bar: "foo",
-        },
-      },
-    });
+      timestamp: new Date().getTime(),
+    };
 
-    console.log("Inserted", myDocument);
+    const myDocument = await collections?.todos.insert(data);
   } catch (e: any) {
     console.log("write error", e);
   }
@@ -217,8 +174,7 @@ export async function read() {
         },
       },
     });
-    const results = await query?.exec() as Todo[];
-    console.log("foundDocuments", JSON.stringify(results));
+    const results = (await query?.exec()) as RxTodo[];
     return results;
   } catch (e: any) {
     console.log("read error", e);
@@ -231,25 +187,69 @@ export async function addTodo(todo: string): Promise<Error | undefined> {
     if (!collections?.todos) {
       throw new Error("todos collection not found");
     }
-    const myDocument = await collections?.todos.insert({
+
+    const data: RxTodo = {
       id: String(new Date().getTime()),
       name: todo,
       done: false,
-      timestamp: new Date().toISOString(),
-      nested: {
-        foo: "bar",
-        bar: "foo",
-        nested: {
-          foo: "bar",
-          bar: "foo",
-        },
-      },
-    });
+      timestamp: new Date().getTime(),
+    };
+
+    const myDocument = await collections?.todos.insert(data);
+
     return;
   } catch (e: any) {
     console.log("write error", e);
     return e as Error;
   }
+}
+
+let querySub: any = null;
+export async function listenTodo(event: Electron.IpcMainEvent) {
+  if (!collections?.todos) {
+    throw new Error("todos collection not found");
+  }
+  querySub?.unsubscribe();
+  const query = collections.todos.find();
+  querySub = query.$.subscribe((results: RxTodo[]) => {
+    event.sender.send("todos-changed", JSON.stringify(results));
+  });
+}
+
+export async function stopListenTodo() {
+  querySub?.unsubscribe();
+}
+
+export async function toggleDone(todo: RxTodo) {
+  if (!collections?.todos) {
+    throw new Error("todos collection not found");
+  }
+  const query = collections.todos.findOne({
+    selector: {
+      id: {
+        $eq: todo.id,
+      },
+    },
+  });
+  const found = await query.exec(true);
+  await found.patch({
+    done: !found.done,
+  });
+}
+
+export async function deleteTodo(todo: RxTodo) {
+  if (!collections?.todos) {
+    throw new Error("todos collection not found");
+  }
+  const query = collections.todos.findOne({
+    selector: {
+      id: {
+        $eq: todo.id,
+      },
+    },
+  });
+  const found = await query.exec(true);
+  await found.remove();
 }
 
 export default initRxDB;
