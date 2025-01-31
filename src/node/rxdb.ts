@@ -15,8 +15,6 @@ must hack:
 
 // * RxDB and RxDB Premium must be imported as require, not import
 
-import { BaseWindow, BrowserView } from "electron";
-
 import sqlite3 from "sqlite3";
 
 const { createRxDatabase, addRxPlugin } = require("rxdb");
@@ -27,7 +25,6 @@ const {
 } = require("rxdb-premium/plugins/storage-sqlite");
 
 import { RxTodo, RxTodoSchema } from "../types/models";
-import { DB_PATH } from "../types/constants";
 import { createReplicator } from "./replicator";
 
 const {

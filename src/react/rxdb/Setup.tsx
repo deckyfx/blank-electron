@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 
 export default function AddTodo() {
   const [path, setPath] = useState("");
+  // /home/decky/Documents/works/blank-electron/rxdb.sqlite
   const [ready, setReady] = useState("");
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
