@@ -1,16 +1,13 @@
-import { useState, useEffect } from 'react';
-
+import { useState, useEffect } from "react";
 
 export default function DemoList() {
   const [demos, setDemos] = useState<any[]>([]);
 
-  useEffect(() => {
-    loadDemos();
-  }, []);
+  useEffect(() => {}, []);
 
   async function loadDemos() {
     if (!window.electronAPI) {
-      console.error('window.electronAPI is not defined');
+      console.error("window.electronAPI is not defined");
       return;
     }
     const result = await window.electronAPI.rxdb.loadDemos();

@@ -140,6 +140,7 @@ async function initCollections(readyEvent: Electron.IpcMainInvokeEvent) {
     );
 
     readyEvent.sender.send("rxdb-ready", "ready");
+    return replicationState;
   } catch (e: any) {
     console.log("initCollections error", e);
   }

@@ -1,7 +1,7 @@
 {
   "name": "blank-electron",
   "productName": "blank-electron",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start",
@@ -9,7 +9,8 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-    "build:win": "electron-forge package --platform=win32 && electron-forge make --platform=win32"
+    "build:win": "electron-forge package --platform=win32 && electron-forge make --platform=win32",
+    "build:linux": "electron-forge package --platform=linux && electron-forge make --platform=linux"
   },
   "keywords": [],
   "description": "Electron with RxDB Premium",

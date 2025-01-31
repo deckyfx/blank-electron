@@ -12,7 +12,7 @@ import initRxDB, {
   deleteTodo,
 } from "./rxdb";
 
-import { writeSQLite, readSQLite } from "./sqlite";
+import { openSQLite, writeSQLite, readSQLite } from "./sqlite";
 
 import { RxTodo } from "../types/models";
 
@@ -86,6 +86,11 @@ export function ipcMainProcess(win: BrowserWindow) {
 
   ipcMain.on("setupRxDB", async (event, path: string) => {
     initRxDB(event, path);
+    return;
+  });
+
+  ipcMain.on("openSQLite", async (event, path: string) => {
+    openSQLite(path);
     return;
   });
 }

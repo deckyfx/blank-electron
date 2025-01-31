@@ -25,7 +25,12 @@ type ElectronAPI = {
     deleteTodo: (todo: RxTodo) => Promise<void>;
 
     setupRxDB: (path: string) => Promise<void>;
-    onRxDBReadyChanged: (channel: string, callback: (data?: string) => void) => void;
+    onRxDBReadyChanged: (
+      channel: string,
+      callback: (data?: string) => void
+    ) => void;
+
+    openSQLite: (path: string) => Promise<void>;
   };
 };
 
@@ -108,6 +113,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.on(channel, (event, data) => {
         callback(data);
       });
+    },
+
+    openSQLite: async (path: string) => {
+      ipcRenderer.send("openSQLite", path);
+      return;
     },
   },
 } as ElectronAPI);

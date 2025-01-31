@@ -14,6 +14,7 @@ export default function AddTodo() {
       return;
     }
     window.electronAPI.rxdb.setupRxDB(path);
+    window.electronAPI.rxdb.openSQLite(path);
   }
 
   useEffect(() => {
