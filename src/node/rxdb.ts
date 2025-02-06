@@ -13,51 +13,46 @@ must hack:
   minSdkVersion 23 
 */
 
-// * RxDB and RxDB Premium must be imported as require, not import
+// * Must add no check to ignore typing errors during build, it is false positive warnings
+// @ts-nocheck
 
 import sqlite3 from "sqlite3";
 
-const { createRxDatabase, addRxPlugin } = require("rxdb");
+import * as rxdb from "rxdb";
+import * as rxdb_crypto from "rxdb/plugins/encryption-crypto-js";
+import * as rxdb_validate from "rxdb/plugins/validate-ajv";
+import * as rxdb_migration from "rxdb/plugins/migration-schema";
+import * as rxdb_devmode from "rxdb/plugins/dev-mode";
 
-const {
-  getRxStorageSQLite,
-  getSQLiteBasicsNode,
-} = require("rxdb-premium/plugins/storage-sqlite");
+import * as rxdb_sqlite from "rxdb-premium/plugins/storage-sqlite";
 
 import { RxTodo, RxTodoSchema } from "../types/models";
 import { createReplicator } from "./replicator";
 
-const {
-  wrappedKeyEncryptionCryptoJsStorage,
-} = require("rxdb/plugins/encryption-crypto-js");
-const { wrappedValidateAjvStorage } = require("rxdb/plugins/validate-ajv");
-const { RxDBMigrationSchemaPlugin } = require("rxdb/plugins/migration-schema");
-const { RxDBDevModePlugin } = require("rxdb/plugins/dev-mode");
+rxdb.addRxPlugin(rxdb_devmode.RxDBDevModePlugin);
+rxdb.addRxPlugin(rxdb_migration.RxDBMigrationSchemaPlugin);
 
-addRxPlugin(RxDBDevModePlugin);
-addRxPlugin(RxDBMigrationSchemaPlugin);
-
-let RXDB: any | null = null;
+let RXDB: rxdb.RxDatabase | null = null;
 
 // * Storage must be declared as global var, and should be made sure only created ONCE during running application
-const STORAGE = getRxStorageSQLite({
-  sqliteBasics: getSQLiteBasicsNode(sqlite3),
-  queryModifier: (queryWithParams: any) => {
+const STORAGE = rxdb_sqlite.getRxStorageSQLite({
+  sqliteBasics: rxdb_sqlite.getSQLiteBasicsNode(sqlite3),
+  queryModifier: (queryWithParams: rxdb_sqlite.SQLiteQueryWithParams) => {
     return queryWithParams;
   },
   // log: console.log.bind(console),
 });
 
-const VALIDATED_STORAGE = wrappedValidateAjvStorage({
+const VALIDATED_STORAGE = rxdb_validate.wrappedValidateAjvStorage({
   storage: STORAGE,
 });
 
-const ENCRYPTED_STORAGE = wrappedKeyEncryptionCryptoJsStorage({
+const ENCRYPTED_STORAGE = rxdb_crypto.wrappedKeyEncryptionCryptoJsStorage({
   storage: VALIDATED_STORAGE,
 });
 
 let collections: {
-  todos: any;
+  todos: rxdb.RxCollection;
 } | null = null;
 
 async function initRxDB(readyEvent: Electron.IpcMainInvokeEvent, path: string) {
@@ -68,7 +63,7 @@ async function initRxDB(readyEvent: Electron.IpcMainInvokeEvent, path: string) {
     }
     console.log("init rxdb");
 
-    RXDB = await createRxDatabase({
+    RXDB = await rxdb.createRxDatabase({
       name: path,
       multiInstance: false, // <- Set multiInstance to false when using RxDB in React Native
       storage: ENCRYPTED_STORAGE,
